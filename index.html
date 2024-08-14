@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroBook</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        body {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'VT323', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 600px;
+            text-align: left;
+            border: 4px solid #00ff00;
+            padding: 20px;
+            background-color: #000;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .story {
+            margin-bottom: 20px;
+            font-size: 24px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            min-height: 200px;
+        }
+
+        .choices button {
+            background-color: #000;
+            color: #00ff00;
+            font-size: 18px;
+            font-family: 'VT323', monospace;
+            border: 2px solid #00ff00;
+            padding: 10px;
+            cursor: pointer;
+            display: block;
+            margin: 10px 0;
+            width: 100%;
+            text-align: left;
+            visibility: hidden; /* Unsichtbar, bis Text fertig geschrieben ist */
+        }
+
+        .choices button.visible {
+            visibility: visible; /* Sichtbar, wenn der Text fertig ist */
+        }
+
+        .choices button:hover {
+            background-color: #00ff00;
+            color: #000;
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: #00ff00; }
+        }
+
+        .typing {
+            overflow: hidden;
+            border-right: .15em solid #00ff00;
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: .15em;
+            animation: blink-caret .75s step-end infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="title">RetroBook</div>
+        <div id="story" class="story"></div>
+        <div id="choices" class="choices"></div>
+    </div>
+    
+    <script>
+        const storyElement = document.getElementById('story');
+        const choicesElement = document.getElementById('choices');
+
+        let state = {};
+        let typingInterval;
+
+        function startGame() {
+            state = {};  // Initialzustand
+            showTextNode(1);
+        }
+
+        function showTextNode(textNodeIndex) {
+            const textNode = textNodes.find(textNode => textNode.id === textNodeIndex);
+            typeText(textNode.text, () => {  // Wenn der Text vollständig angezeigt wurde
+                textNode.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.innerText = option.text;
+                    button.classList.add('visible');  // Jetzt sichtbar
+                    button.addEventListener('click', () => selectOption(option));
+                    choicesElement.appendChild(button);
+                });
+            });
+        }
+
+        function selectOption(option) {
+            clearInterval(typingInterval); // Stoppt die Schreibanimation
+            const nextTextNodeId = option.nextText;
+            while (choicesElement.firstChild) {
+                choicesElement.removeChild(choicesElement.firstChild);
+            }
+            showTextNode(nextTextNodeId);
+        }
+
+        function typeText(text, callback) {
+            storyElement.innerHTML = '';  // Leert den Inhalt
+            let i = 0;
+            typingInterval = setInterval(() => {
+                if (i < text.length) {
+                    storyElement.innerHTML += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typingInterval);
+                    callback(); // Führt die callback-Funktion aus, wenn der Text fertig ist
+                }
+            }, 50); // Geschwindigkeit des Typs (50ms)
+        }
+
+        const textNodes = [
+            {
+                id: 1,
+                text: 'Es ist eine dunkle und stürmische Nacht. Du gehst einen verlassenen Pfad entlang, als du plötzlich eine alte Weggabelung siehst. Links führt der Weg tiefer in den Wald, rechts scheint ein schwaches Licht aus der Ferne zu kommen. Was wirst du tun?',
+                options: [
+                    { text: 'Dem Licht folgen', nextText: 2 },
+                    { text: 'In den Wald gehen', nextText: 3 },
+                ]
+            },
+            {
+                id: 2,
+                text: 'Du folgst dem Licht und näherst dich einem kleinen, alten Haus. Das Licht kommt aus einem zerbrochenen Fenster. Willst du näher herangehen oder umkehren?',
+                options: [
+                    { text: 'Näher herangehen', nextText: 4 },
+                    { text: 'Umkehren', nextText: 5 },
+                ]
+            },
+            {
+                id: 3,
+                text: 'Du betrittst den dunklen Wald. Die Äste knacken unter deinen Füßen, und du hörst das ferne Heulen eines Wolfs. Du siehst einen Schatten, der sich schnell bewegt. Willst du ihm folgen oder den Wald verlassen?',
+                options: [
+                    { text: 'Dem Schatten folgen', nextText: 6 },
+                    { text: 'Den Wald verlassen', nextText: 1 },
+                ]
+            },
+            {
+                id: 4,
+                text: 'Als du dich dem Haus näherst, hörst du eine leise Stimme, die deinen Namen flüstert. Das Licht erlischt plötzlich, und alles wird still. Eine kalte Hand greift nach deinem Arm. Willst du kämpfen oder fliehen?',
+                options: [
+                    { text: 'Kämpfen', nextText: 7 },
+                    { text: 'Fliehen', nextText: 8 },
+                ]
+            },
+            {
+                id: 5,
+                text: 'Du kehrst zur Weggabelung zurück. Der Wald ist jetzt noch düsterer, und es scheint, als würden dich unsichtbare Augen beobachten. Was wirst du tun?',
+                options: [
+                    { text: 'In den Wald gehen', nextText: 3 },
+                    { text: 'Weiter dem Pfad folgen', nextText: 9 },
+                ]
+            },
+            {
+                id: 6,
+                text: 'Du folgst dem Schatten durch den Wald. Er führt dich zu einer alten, verfallenen Ruine. Im Inneren der Ruine findest du eine goldene Truhe. Was wirst du tun?',
+                options: [
+                    { text: 'Die Truhe öffnen', nextText: 10 },
+                    { text: 'Die Ruine verlassen', nextText: 11 },
+                ]
+            },
+            {
+                id: 7,
+                text: 'Du kämpfst verzweifelt gegen die unsichtbare Kraft, die dich festhält. Doch je mehr du kämpfst, desto fester wird ihr Griff. Schließlich verlierst du das Bewusstsein und wachst nie wieder auf. Das Spiel ist zu Ende.',
+                options: [
+                    { text: 'Nochmal spielen', nextText: 1 }
+                ]
+            },
+            {
+                id: 8,
+                text: 'Du reißt dich los und rennst so schnell du kannst. Als du zurückschaust, siehst du, wie das Haus langsam in der Dunkelheit verschwindet. Du bist entkommen, aber das Gefühl der Kälte bleibt. Das Spiel endet hier.',
+                options: [
+                    { text: 'Nochmal spielen', nextText: 1 }
+                ]
+            },
+            {
+                id: 9,
+                text: 'Du entscheidest dich, dem Pfad weiter zu folgen. Der Weg führt dich zu einer alten Steinbrücke, die über einen reißenden Fluss führt. Auf der anderen Seite siehst du eine Stadt in der Ferne. Was wirst du tun?',
+                options: [
+                    { text: 'Die Brücke überqueren', nextText: 12 },
+                    { text: 'Umkehren', nextText: 1 },
+                ]
+            },
+            {
+                id: 10,
+                text: 'Du öffnest die Truhe und findest einen alten, verstaubten Spiegel. Als du hineinschaust, siehst du nicht dein eigenes Spiegelbild, sondern das eines fremden, düsteren Wesens. Es starrt dich an, und du spürst, wie es langsam deine Seele verschlingt. Du wirst nie wieder derselbe sein. Das Spiel ist zu Ende.',
+                options: [
+                    { text: 'Nochmal spielen', nextText: 1 }
+                ]
+            },
+            {
+                id: 11,
+                text: 'Du entscheidest dich, die Ruine zu verlassen. Auf deinem Weg zurück hörst du ein lautes Krachen und drehst dich um. Die Ruine ist eingestürzt, und die Truhe ist für immer verloren. Du entkommst knapp, aber das Gefühl, etwas Wichtiges verloren zu haben, bleibt. Das Spiel endet hier.',
+                options: [
+                    { text: 'Nochmal spielen', nextText: 1 }
+                ]
+            },
+            {
+                id: 12,
+                text: 'Du überquerst die Brücke und erreichst die Stadt. Die Straßen sind leer, und die Häuser sind verlassen. Eine alte Zeitung weht dir entgegen. Auf der Titelseite steht: "Die Zeit ist abgelaufen." Plötzlich wird alles schwarz. Das Spiel ist zu Ende.',
+                options: [
+                    { text: 'Nochmal spielen', nextText: 1 }
+                ]
+            }
+        ];
+
+        startGame();
+    </script>
+</body>
+</html>
