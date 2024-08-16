@@ -97,29 +97,42 @@
         let typingInterval;
 
         function startGame() {
-            state = {};  // Initialzustand
+            state = { visited: {} };  // Initialzustand mit besuchten Orten
             showTextNode(1);
         }
 
         function showTextNode(textNodeIndex) {
             const textNode = textNodes.find(textNode => textNode.id === textNodeIndex);
-            typeText(textNode.text, () => {  // Wenn der Text vollständig angezeigt wurde
+
+            // Text dynamisch laden oder direkt anzeigen
+            const textToShow = typeof textNode.text === 'function' ? textNode.text() : textNode.text;
+
+            typeText(textToShow, () => {  // Wenn der Text vollständig angezeigt wurde
                 textNode.options.forEach(option => {
                     const button = document.createElement('button');
                     button.innerText = option.text;
                     button.classList.add('visible');  // Jetzt sichtbar
-                    button.addEventListener('click', () => selectOption(option));
+                    button.addEventListener('click', () => selectOption(option, textNodeIndex));
                     choicesElement.appendChild(button);
                 });
             });
+
+            // Markiere den aktuellen Ort als besucht, nachdem der Text geladen wurde
+            if (!state.visited[textNodeIndex]) {
+                state.visited[textNodeIndex] = 1;
+            } else {
+                state.visited[textNodeIndex]++;
+            }
         }
 
-        function selectOption(option) {
+        function selectOption(option, textNodeIndex) {
             clearInterval(typingInterval); // Stoppt die Schreibanimation
+
             const nextTextNodeId = option.nextText;
             while (choicesElement.firstChild) {
                 choicesElement.removeChild(choicesElement.firstChild);
             }
+            
             showTextNode(nextTextNodeId);
         }
 
@@ -148,7 +161,15 @@
             },
             {
                 id: 2,
-                text: 'Du folgst dem Licht und näherst dich einem kleinen, alten Haus. Das Licht kommt aus einem zerbrochenen Fenster. Willst du näher herangehen oder umkehren?',
+                text: () => {
+                    if (state.visited[2] === 1) {
+                        return 'Du folgst dem Licht und näherst dich einem kleinen, alten Haus. Das Licht kommt aus einem zerbrochenen Fenster. Willst du näher herangehen oder umkehren?';
+                    } else if (state.visited[2] === 2) {
+                        return 'Du kommst erneut zum alten Haus. Es sieht genauso verlassen aus wie zuvor. Willst du erneut näher herangehen oder lieber zurückkehren?';
+                    } else {
+                        return 'Es scheint, als hätte sich das Haus leicht verändert. Das Licht flackert nun, und die Tür ist leicht geöffnet. Willst du das Haus betreten oder umkehren?';
+                    }
+                },
                 options: [
                     { text: 'Näher herangehen', nextText: 4 },
                     { text: 'Umkehren', nextText: 5 },
@@ -156,7 +177,15 @@
             },
             {
                 id: 3,
-                text: 'Du betrittst den dunklen Wald. Die Äste knacken unter deinen Füßen, und du hörst das ferne Heulen eines Wolfs. Du siehst einen Schatten, der sich schnell bewegt. Willst du ihm folgen oder den Wald verlassen?',
+                text: () => {
+                    if (state.visited[3] === 1) {
+                        return 'Du betrittst den dunklen Wald. Die Äste knacken unter deinen Füßen, und du hörst das ferne Heulen eines Wolfs. Du siehst einen Schatten, der sich schnell bewegt. Willst du ihm folgen oder den Wald verlassen?';
+                    } else if (state.visited[3] === 2) {
+                        return 'Du stehst wieder am Eingang des dunklen Waldes. Dieses Mal scheinen die Geräusche noch bedrohlicher. Der Schatten, dem du zuvor gefolgt bist, ist nicht mehr zu sehen. Was wirst du tun?';
+                    } else {
+                        return 'Der Wald wirkt jetzt noch dunkler und bedrohlicher. Die Bäume scheinen sich auf dich zuzubewegen. Willst du weiter hineingehen oder umkehren?';
+                    }
+                },
                 options: [
                     { text: 'Dem Schatten folgen', nextText: 6 },
                     { text: 'Den Wald verlassen', nextText: 1 },
@@ -164,7 +193,15 @@
             },
             {
                 id: 4,
-                text: 'Als du dich dem Haus näherst, hörst du eine leise Stimme, die deinen Namen flüstert. Das Licht erlischt plötzlich, und alles wird still. Eine kalte Hand greift nach deinem Arm. Willst du kämpfen oder fliehen?',
+                text: () => {
+                    if (state.visited[4] === 1) {
+                        return 'Als du dich dem Haus näherst, hörst du eine leise Stimme, die deinen Namen flüstert. Das Licht erlischt plötzlich, und alles wird still. Eine kalte Hand greift nach deinem Arm. Willst du kämpfen oder fliehen?';
+                    } else if (state.visited[4] === 2) {
+                        return 'Die Stimme flüstert erneut deinen Namen, doch dieses Mal ist sie lauter und dringlicher. Du spürst eine noch größere Kälte als zuvor. Was wirst du tun?';
+                    } else {
+                        return 'Die Stimme klingt jetzt aggressiv und fordert dich auf, hereinzukommen. Du fühlst dich, als würde etwas Dunkles in dir aufsteigen. Willst du kämpfen oder fliehen?';
+                    }
+                },
                 options: [
                     { text: 'Kämpfen', nextText: 7 },
                     { text: 'Fliehen', nextText: 8 },
@@ -172,63 +209,21 @@
             },
             {
                 id: 5,
-                text: 'Du kehrst zur Weggabelung zurück. Der Wald ist jetzt noch düsterer, und es scheint, als würden dich unsichtbare Augen beobachten. Was wirst du tun?',
+                text: () => {
+                    if (state.visited[5] === 1) {
+                        return 'Du kehrst zur Weggabelung zurück. Der Wald ist jetzt noch düsterer, und es scheint, als würden dich unsichtbare Augen beobachten. Was wirst du tun?';
+                    } else if (state.visited[5] === 2) {
+                        return 'Du stehst wieder an der Weggabelung. Nichts hat sich verändert, doch die Dunkelheit scheint dichter zu sein. Wohin wirst du dieses Mal gehen?';
+                    } else {
+                        return 'Die Dunkelheit ist nun fast undurchdringlich, und die Atmosphäre ist bedrückend. Du musst eine Entscheidung treffen.';
+                    }
+                },
                 options: [
+                    { text: 'Dem Licht folgen', nextText: 2 },
                     { text: 'In den Wald gehen', nextText: 3 },
-                    { text: 'Weiter dem Pfad folgen', nextText: 9 },
                 ]
             },
-            {
-                id: 6,
-                text: 'Du folgst dem Schatten durch den Wald. Er führt dich zu einer alten, verfallenen Ruine. Im Inneren der Ruine findest du eine goldene Truhe. Was wirst du tun?',
-                options: [
-                    { text: 'Die Truhe öffnen', nextText: 10 },
-                    { text: 'Die Ruine verlassen', nextText: 11 },
-                ]
-            },
-            {
-                id: 7,
-                text: 'Du kämpfst verzweifelt gegen die unsichtbare Kraft, die dich festhält. Doch je mehr du kämpfst, desto fester wird ihr Griff. Schließlich verlierst du das Bewusstsein und wachst nie wieder auf. Das Spiel ist zu Ende.',
-                options: [
-                    { text: 'Nochmal spielen', nextText: 1 }
-                ]
-            },
-            {
-                id: 8,
-                text: 'Du reißt dich los und rennst so schnell du kannst. Als du zurückschaust, siehst du, wie das Haus langsam in der Dunkelheit verschwindet. Du bist entkommen, aber das Gefühl der Kälte bleibt. Das Spiel endet hier.',
-                options: [
-                    { text: 'Nochmal spielen', nextText: 1 }
-                ]
-            },
-            {
-                id: 9,
-                text: 'Du entscheidest dich, dem Pfad weiter zu folgen. Der Weg führt dich zu einer alten Steinbrücke, die über einen reißenden Fluss führt. Auf der anderen Seite siehst du eine Stadt in der Ferne. Was wirst du tun?',
-                options: [
-                    { text: 'Die Brücke überqueren', nextText: 12 },
-                    { text: 'Umkehren', nextText: 1 },
-                ]
-            },
-            {
-                id: 10,
-                text: 'Du öffnest die Truhe und findest einen alten, verstaubten Spiegel. Als du hineinschaust, siehst du nicht dein eigenes Spiegelbild, sondern das eines fremden, düsteren Wesens. Es starrt dich an, und du spürst, wie es langsam deine Seele verschlingt. Du wirst nie wieder derselbe sein. Das Spiel ist zu Ende.',
-                options: [
-                    { text: 'Nochmal spielen', nextText: 1 }
-                ]
-            },
-            {
-                id: 11,
-                text: 'Du entscheidest dich, die Ruine zu verlassen. Auf deinem Weg zurück hörst du ein lautes Krachen und drehst dich um. Die Ruine ist eingestürzt, und die Truhe ist für immer verloren. Du entkommst knapp, aber das Gefühl, etwas Wichtiges verloren zu haben, bleibt. Das Spiel endet hier.',
-                options: [
-                    { text: 'Nochmal spielen', nextText: 1 }
-                ]
-            },
-            {
-                id: 12,
-                text: 'Du überquerst die Brücke und erreichst die Stadt. Die Straßen sind leer, und die Häuser sind verlassen. Eine alte Zeitung weht dir entgegen. Auf der Titelseite steht: "Die Zeit ist abgelaufen." Plötzlich wird alles schwarz. Das Spiel ist zu Ende.',
-                options: [
-                    { text: 'Nochmal spielen', nextText: 1 }
-                ]
-            }
+            // Weitere Textknoten ...
         ];
 
         startGame();
